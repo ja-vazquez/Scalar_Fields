@@ -4,12 +4,13 @@ Scalar fields in the universe
 [**Aqui los calculos**](https://nbviewer.jupyter.org/github/ja-vazquez/Scalar_Fields/blob/master/Cosmo_rhos.ipynb)
 
 **Articulos de referencia**
+Las ecuaciones de estado, se parecen?
 
-[Reconstruccion w(z)](d)
+[Reconstruccion w(z)](https://github.com/ja-vazquez/Scalar_Fields/blob/master/NatureZhao_LE_1504694390_1.pdf)
  
-[Quintom](https://arxiv.org/abs/astro-ph/0410654)
+[Quintom Cosmology](https://arxiv.org/abs/astro-ph/0410654)
 
-La evolucion de la ecuacion de estado, se parecen?
+[SimpleMC code](https://github.com/ja-vazquez/april)
 
 La idea es basica:
 		
