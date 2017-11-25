@@ -1,6 +1,11 @@
 # Scalar_Fields
 Scalar fields in the universe
 
+[**Aqui los calculos**](https://nbviewer.jupyter.org/github/ja-vazquez/Scalar_Fields/blob/master/Cosmo_rhos.ipynb)
+
+
+ 
+
 La idea es basica:
 		
 		Un campo escalar, con un potencial V(Phi)
@@ -38,4 +43,4 @@ Comparacion con las observaciones.
 		MontePython o CosmoMC (tambien para calcular evidencia).
 		 
 
-![alt text][logo]
+![LCDM](https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg)
