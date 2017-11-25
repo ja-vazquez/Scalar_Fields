@@ -44,9 +44,9 @@ Comparacion con las observaciones.
 		 
 
 <img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg" widt="100p" height="200"/>
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_V.jpg" widt="100p" height="200"/>
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_V.jpg" widt="200p" height="200"/>
 
 
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/rhos_V.jpg" widt="100p" height="200"/>
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/rhos_V.jpg" widt="200p" height="200"/>
 
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Hz_V.jpg" widt="100p" height="200"/>
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Hz_V.jpg" widt="200p" height="200"/>
