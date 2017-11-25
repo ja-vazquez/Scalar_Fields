@@ -1,18 +1,19 @@
 # Scalar_Fields
 Scalar fields in the universe
 En este repo agregue la cosmologia del fondo
-con un campo escalar $V(\phi)=V_0 e^{-\lam \phi}$
+con un campo escalar V(phi)=V_0 e^(-lam phi)
 que sustituye a la constante cosmologica.
 
 [**Aqui los calculos**](https://nbviewer.jupyter.org/github/ja-vazquez/Scalar_Fields/blob/master/Cosmo_rhos.ipynb)
 
 **Articulos de referencia**
 
-Las ecuaciones de estado, se parecen?
 
 [Reconstruccion w(z)](https://github.com/ja-vazquez/Scalar_Fields/blob/master/NatureZhao_LE_1504694390_1.pdf)
  
 [Quintom Cosmology](https://arxiv.org/abs/astro-ph/0410654)
+
+Las ecuaciones de estado, se parecen?
 
 [SimpleMC code](https://github.com/ja-vazquez/april)
 
@@ -42,6 +43,8 @@ Reconstruccion
 		futuro.
 		Es posible recuperar la forma de este potencial? :
 		Celia E. va a hacer un blind test.
+
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Hz_V.jpg" widt="200p" height="200"/>
 		
 Comparacion con las observaciones.
 
@@ -56,4 +59,4 @@ Comparacion con las observaciones.
 
 <img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/rhos_V.jpg" widt="200p" height="200"/>
 
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Hz_V.jpg" widt="200p" height="200"/>
+
