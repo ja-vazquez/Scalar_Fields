@@ -43,4 +43,4 @@ Comparacion con las observaciones.
 		MontePython o CosmoMC (tambien para calcular evidencia).
 		 
 
-![LCDM](https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg)
+![LCDM](https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg =100x20)
