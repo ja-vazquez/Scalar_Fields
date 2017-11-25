@@ -3,8 +3,13 @@ Scalar fields in the universe
 
 [**Aqui los calculos**](https://nbviewer.jupyter.org/github/ja-vazquez/Scalar_Fields/blob/master/Cosmo_rhos.ipynb)
 
+**Articulos de referencia**
 
+[Reconstruccion w(z)](d)
  
+[Quintom](https://arxiv.org/abs/astro-ph/0410654)
+
+La evolucion de la ecuacion de estado, se parecen?
 
 La idea es basica:
 		
@@ -24,6 +29,8 @@ Teoria:
 		Existe algun potential preferido, puede un solo
 		campo o son necesarios dos? -- Phantom
 		
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg" widt="100p" height="200"/>
+<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_V.jpg" widt="200p" height="200"/>
 		
 Reconstruccion 
 
@@ -43,8 +50,6 @@ Comparacion con las observaciones.
 		MontePython o CosmoMC (tambien para calcular evidencia).
 		 
 
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_LCDM.jpg" widt="100p" height="200"/>
-<img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/Omegas_V.jpg" widt="200p" height="200"/>
 
 
 <img src="https://github.com/ja-vazquez/Scalar_Fields/blob/master/rhos_V.jpg" widt="200p" height="200"/>
