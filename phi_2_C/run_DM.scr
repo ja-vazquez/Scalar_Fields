@@ -1,0 +1,41 @@
+THISDIR=`pwd`
+CODEDIR=$THISDIR/../
+TOOLS=$CODEDIR/TOOLS
+
+cd $CODEDIR
+
+cd $THISDIR
+
+rm Omegas.eps
+rm F.eps
+
+#rm F.eps
+#rm xy.eps
+#rm xz.eps
+#rm yz.eps
+
+gcc -o phi_2  phi_2.c -lm
+./phi_2
+
+gnuplot Omegas.gp
+open Omegas.eps &
+gnuplot F.gp
+open F.eps &
+
+#gnuplot F.gp
+#gv F.eps &
+#gnuplot xy.gp
+#gv xy.eps &
+#gnuplot yz.gp
+#gv yz.eps &
+#gnuplot xz.gp
+#gv xz.eps &
+
+
+#rm -f *.gif
+#map2gif -inp test_map.fits -out test_map.gif
+#gthumb test_map.gif &
+
+
+
+
