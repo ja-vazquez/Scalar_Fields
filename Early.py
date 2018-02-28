@@ -31,7 +31,6 @@ class Early:
 
         self.cte    = 3*self.H0**2
 
-
         self.lB   = lB
         self.lA   = lA
         self.lam = lam
