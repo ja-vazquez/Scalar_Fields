@@ -11,8 +11,10 @@ from scipy.integrate import odeint
 #import os
 import matplotlib as mpl
 
-# Build a function for interpolation
-# Can be chosen LCDM or SFDM
+
+
+# TODO-me Can be chosen LCDM or SFDM
+# TODO-me Build a function for interpolation
 
 class Quintom:
     def __init__(self, mquin=1, mphan=1, phan0=0, name='Alberto'):

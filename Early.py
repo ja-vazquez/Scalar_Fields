@@ -16,7 +16,7 @@ import scipy.optimize as optimize
 # Can be chosen LCDM or SFDM
 
 class Early:
-    def __init__(self, lA=0.14, lB=2, lam=4, name='Alberto'):
+    def __init__(self, lA=0.4, lB=5, lam=4, name='Alberto'):
 
         self.name   = name
 
@@ -64,7 +64,7 @@ class Early:
         a = np.exp(lna)
         if SF:
             quin, dotquin= x_vec
-            Ode_quin =  0.5*dotquin**2 + self.Vearly(quin, 0)
+            Ode_quin = 0.5*dotquin**2 + self.Vearly(quin, 0)
             Ode      = Ode_quin
         else:
             Ode = self.Ode
@@ -88,12 +88,13 @@ class Early:
 
 
     def RHS(self, x_vec, lna):
-        quin, dotquin= x_vec
+        quin, dotquin = x_vec
         hubble = self.hubble(lna, x_vec, SF=True)
         return [np.sqrt(3.0)*dotquin/hubble, -3*dotquin - np.sqrt(3.0)*self.Vearly(quin, 1)/hubble]
 
 
     def phidot(self, x0):
+        #initial condition such that w=1/3
         return np.sqrt(4*self.Vearly(x0, 0))
 
 
@@ -106,6 +107,7 @@ class Early:
 
     #Cambiar
     def find_phi0(self, x):
+        #from the K-G equation and using the initial condition w=1/3
         return (self.Vearly(x, 1)**2/self.Vearly(x, 0)/4 - self.Vearly(x,0))*np.exp(4*self.lna[0])*(3./self.Orad) - 1.
 
 
@@ -116,7 +118,10 @@ class Early:
         Ttol            = 5e-3
         count           = 0
 
+        # just get the values for phi0 given the potentials.
+        # we want to find vp0 first to get \Ode =0.7 and compute phi0
         quin0 = optimize.bisect(self.find_phi0, -20, 20, xtol= 0.001) if num != 0 else 0
+        print quin0
 
         while (np.abs(tol)> Ttol):
             mid = (lowphi + highphi)/2.0
@@ -124,18 +129,16 @@ class Early:
 
             quin, dotq= sol
 
-            rho_quin =   0.5*dotq[-1]**2 + self.Vearly(quin[-1], 0)
-            Ode = rho_quin/self.hubble(0.0, [quin[-1], dotq[-1]], SF=True)**2
-            tol = (1- self.Ocb- self.Orad) - Ode
-            #print Ode, mid, self.Ode
+            rhoq = 0.5*dotq[-1]**2 + self.Vearly(quin[-1], 0)
+            Ode  = rhoq/self.hubble(0.0, [quin[-1], dotq[-1]], SF=True)**2
+            tol  = (1- self.Ocb- self.Orad) - Ode
+
             if(np.abs(tol) < Ttol):
                 print 'reach tolerance', 'Ode=', Ode, 'phi_0=', mid, 'error=', np.abs(tol)
                 break
             else:
-                if(tol<0):
-                    highphi = mid
-                else:
-                    lowphi  = mid
+                if(tol<0): highphi = mid
+                else:      lowphi  = mid
 
             count+= 1
             if (count > 10):
