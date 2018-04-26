@@ -4,160 +4,176 @@ import numpy as np
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import pandas as pd
 import matplotlib as mpl
+
 
 class Horndeski:
     def __init__(self, name='Alberto'):
 
         self.name = name
 
-        self.w0 = -1.3
-        self.w1 =  0.5
-
         self.H0     = 0.7
         self.Ocb    = 0.24
         self.Omrad  = 0.0001
-        self.Ode    = 1-self.Ocb-self.Omrad
+        self.Ode    = 1-self.Ocb
+
+        self.z_fin  = 12.
+        self.z_cut  = 3.
+
+        self.w0     = 0.7
+        self.wa     = 0.71
+        self.wb     = 0.67
+        self.wc     = 0.7
 
         self.lna    = np.linspace(-3, 0, 50)
         self.aa     = np.exp(self.lna)
         self.z      = np.exp(-self.lna) - 1.
-        self.zvals  = np.linspace(0, 3, 20)
+        self.zvals  = np.linspace(0, self.z_fin, 25)
+
+        #Initialize, compute integral
+        self.inter()
+
 
     def something(self):
         print self.name
 
 
+
+    def rhow(self, z):
+        if z<= self.z_cut:
+            x =[0.0, 0.8, 1.6, 2.4, self.z_cut]
+            y =[self.w0,  1-self.Ocb, 1-self.Ocb, 1.-self.Ocb, 1.-self.Ocb]
+            #self.wa, self.wb, self.wc, 1] #.-self.Ocb]
+            f =interp1d(x, y, kind='linear')
+            #f= UnivariateSpline(x,y)
+            rhow = f(z)
+        else:
+            rhow = 1.-self.Ocb
+        return rhow
+
+
+    def func_L(self, z):
+        return self.rhow(z)*(1.+z)**(-7.)
+
+
+    def Integral_L(self, z):
+        integral = quad(self.func_L, 0, z)[0]
+        calc     = -6*(1.+z)**6*(integral - self.test)
+        return calc
+
+
+    def inter(self):
+        self.test = quad(self.func_L, 0, self.z_fin)[0]
+        self.L_int  =[self.Integral_L(i) for i in self.zvals]
+        self.interp      = interp1d(self.zvals, self.L_int, kind='linear')
+        return 1
+
+
+    def hubble(self, lna, HD=True):
+        a = np.exp(lna)
+        z = 1./a - 1.0
+
+
+        if (z>=0  and z< self.z_cut):
+                Ode = self.interp(z)
+        else:
+                Ode = 1.0 - self.Ocb #self.test #self.interp(self.z_fin)
+
+        return self.H0*np.sqrt(self.Ocb/a**3 + self.Omrad/a**4 + Ode)
+
+
     def logatoz(self, func):
-        # change function from lna to z
+        "change functions from lna to z "
         tmp     = interp1d(self.lna, func)
         functmp = tmp(self.lna)
         return  np.interp(self.zvals, self.z[::-1], functmp[::-1])
 
 
-    def eos(self, a):
-        return -1.24 + np.sin((1-a)*6/self.w1)**2#(1-a)*self.w1
+ #   Plots
+    #================================================================================
 
 
-
-    def cdet(self, a):
-        return -0.24 + np.sin((1-a)*6/self.w1)**2 #(1+ self.eos(a))/(1- self.eos(a))
-
-
-    def rho_de(self):
-        return  (1+ self.eos(self.aa))/self.aa
-
-
-    def rho_int(self, a):
-        tmp     = interp1d(self.aa, self.rho_de())
-        rho = np.array([quad(tmp, i, 1)[0] for i in a])
-        return np.exp(3*rho)
-
-
-    def lambdadet(self, a):
-        return np.cos((1-a)*6/self.w1)**2 #2*(self.w1)*np.ones(len(a)) #*np.cos((1-a)*6*self.w1) #self.Ode*np.ones(len(a)) #0.5*(1- self.eos(a))*self.rho_int(a)
-
-
-    def hubble(self, lna, HD=True):
-        a = np.exp(lna)
-        if HD:
-            self.lam = self.lambdadet(a)
-            self.cde = self.cdet(a)
-            Ode = self.lam + self.cde #*self.lam
-
-        else:
-            Ode = self.Ode
-
-        return self.H0*np.sqrt(self.Ocb/a**3 + self.Omrad/a**4 + Ode)
-
-
-    def plot_hub(self):
-        f = plt.figure(figsize=(9,10))
-        ax1 = f.add_subplot(221)
-        ax2 = f.add_subplot(222)
-        ax3 = f.add_subplot(223)
-        ax4 = f.add_subplot(224)
-
-        #f, axes = plt.subplots(nrows=2, ncols=2, sharex=False, figsize=(9,10))
-        #((ax1, ax2), (ax3, ax4)) = axes
-        dataHz = np.loadtxt('Hz_all.dat')
-        redshifts, obs, errors = [dataHz[:,i] for i in [0,1,2]]
-        ax1.errorbar(redshifts, obs, errors, xerr=None,
-                color='purple', marker='o', ls='None',
-                elinewidth =2, capsize=3, capthick = 1, label='$Datos$')
-        ax1.plot(self.zvals, 100*self.logatoz(self.hubble(self.lna, HD=False)),  'k-')
-
-        min, max = (0, 1)
-        step     = (max-min)/10.
-
-        hh =[]
-        cc =[]
-        ll =[]
-        zz =[]
-        ww =[]
-        P  =[]
-
-        for i in np.arange(min, max, step):
-            self.w1 =  i
-            hh.append(100*self.logatoz(self.hubble(self.lna)))
-            cc.append(self.logatoz(self.cde))
-            ll.append(self.logatoz(self.lam))
-            ww.append(self.logatoz(self.eos(self.aa)))
-            zz.append(self.zvals)
-            P.append(i)
-
-
-        mymap    = mpl.colors.LinearSegmentedColormap.from_list('mycolors',['blue','red'])
-        Z        = [[0,0]]
-        levels   = np.arange(min,max+step,step)
-        CS3      = plt.contourf(Z, levels, cmap=mymap)
-        cbaxes = f.add_axes([0.91, 0.1, 0.03, 0.8])
-        cbar   = plt.colorbar(CS3, cax = cbaxes)
-        cbar.set_label('$w_1$', rotation=0, fontsize=20)
-
-        for x,y,z in zip(zz,hh,P):
-            r    = (float(z)-min)/(max-min)
-            g, b = 0, 1-r
-            ax1.plot(x,y, color=(r,g,b))
-
-        for x,y,z in zip(zz,cc,P):
-            r    = (float(z)-min)/(max-min)
-            g, b = 0, 1-r
-            ax2.plot(x,y, color=(r,g,b))
-
-
-        for x,y,z in zip(zz,ll,P):
-            r    = (float(z)-min)/(max-min)
-            g, b = 0, 1-r
-            ax3.plot(x,y, color=(r,g,b))
-
-
-        for x,y,z in zip(zz,ww,P):
-            r    = (float(z)-min)/(max-min)
-            g, b = 0, 1-r
-            ax4.plot(x,y, color=(r,g,b))
-
-        ax3.set_xlabel('redshift $z$')
-        ax4.set_xlabel('redshift $z$')
-        #ax4.set_xticks( np.arange(3) )
-        #ax4.set_xticklabels( np.arange(3) )
-
-
-           # ax1.plot(self.zvals, 100*self.logatoz(self.hubble(self.lna)))
-           # ax2.plot(self.zvals, self.logatoz(self.cde))
-           # ax3.plot(self.zvals, self.logatoz(self.lam))
-           # ax4.plot(self.zvals, self.logatoz(self.eos(self.aa)))
-
-        ax1.set_ylabel('$H(z)$')
-        ax2.set_ylabel('$c(a)$')
-        ax3.set_ylabel('$L(a)$')
-        ax4.set_ylabel('$w(a)$')
-        f.subplots_adjust(hspace=0.1)
-        plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
-        plt.legend(loc= 'best', frameon=False)
-        plt.savefig('Horn_2.pdf')
+    def plot_c(self):
+        plt.plot(self.zvals, [self.rhow(i) for i in self.zvals], 'r-')
+        int_co = [self.Integral_L(i)  for i in self.zvals]
+        plt.plot(self.zvals, int_co )
+        #plt.plot(self.zvals, int_co-self.rhow(self.zvals), 'g-' )
+        plt.xlim(0, 4)
+        plt.ylim(0.6, 0.8)
         plt.show()
+
+
+    def contours(self):
+        #dir = '/Users/josevazquezgonzalez/Desktop/SimpleMC/SimpleMC/trunk/chains/'
+	dir ='/Users/josevazquezgonzalez/Desktop/Desktop_Jose/work/Papers/Horndeski/Horn_chains/'
+	which = '_1p_c'
+	name_in = 'Horn'+which+'_phy_Planck+BBAO_'
+
+        file = open('Lambda'+which+'.txt','w')
+        file2 = open('rho'+which+'.txt','w')
+        file3 = open('c'+which+'.txt','w')
+
+        zv = [0.0, 0.8, 1.6, 2.4, self.z_cut]
+
+        for j in range(2):
+            i = 0
+            for line in reversed(open(dir + name_in + '%s.txt'%(j+1)).readlines()):
+                if i% 10==1:
+                    a= line.split(' ')
+                    #print a[5:7]
+                    self.w0 = float(a[5]) #map(float, a[5:8])
+                    self.H0  = float(a[4])
+                    self.Ocb = float(a[2])
+                    self.inter()
+
+                    ls = [self.w0,  1-self.Ocb, 1-self.Ocb, 1- self.Ocb, 1- self.Ocb] #]self.wa, self.wb, self.wc, 1] #-self.Ocb]
+                    rs = self.interp(zv)
+                    cs = rs - ls
+
+                    c= ' '.join(map(str, zv))
+
+                    file.write('%s %s %s\n'%(a[0] ,c , ' '.join(map(str, ls))))
+                    file2.write('%s %s %s\n'%(a[0] , c , ' '.join(map(str, rs))))
+                    file3.write('%s %s %s\n'%(a[0] , c , ' '.join(map(str, cs))))
+                    print j+1, i
+                i+=1
+                #if i == 1000: break
+                file.flush()
+                file2.flush()
+                file3.flush()
+        file.close()
+        file2.close()
+        file3.close()
+
+        #with open(dir+'Horn_phy_Planck_15+SN+BBAO_2.txt') as f:
+        #    print  [line.rstrip('\n') for line in f][0]
+
+       # file = open('testfile.txt','w')
+
+       # for i in range(5000):
+       #     a , self.w0,  self.wa, self.wb, self.wc = df.iloc[i].values
+       #     self.inter()
+       #     b= ' '.join(map(str, self.interp([0.0,    1.0,        2.0,    self.z_fin])))
+       #     file.write('%e %s %f %f %f %f\n'%(a , b, self.w0,  self.wa, self.wb, self.wc))
+       # file.close()
+
+#        self.w0     = 0.1
+#        self.wa     = -0.1
+#        self.wb     = -0.1
+#        self.wc     = 0.1
+#        self.inter()
+        #print self.interp([0.0,    1.0,        2.0,    self.z_fin])
+
+        #df.insert(1,0,0)
+        #df.insert(2,1.0,1.0)
+        #df.insert(3,2.0,2.0)
+        #df.insert(4,3.0,self.z_fin)
+        #df.to_csv('horn.csv', sep=' ', header=False, index=False)
+        #df.insert([1,2,3,4],[1,2,3,4],[0,1,2,self.z_fin])
+        #print df
 
 if __name__ == '__main__':
     H = Horndeski()
-    print H.plot_hub()
+    #H.plot_c()
+    H.contours()
