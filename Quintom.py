@@ -9,6 +9,7 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from scipy.integrate import odeint
 #import os
+from scipy import optimize
 import matplotlib as mpl
 
 
@@ -26,16 +27,18 @@ class Quintom:
         self.quin0  = quin0
         self.phan0  = phan0
 
-        self.H0     = 0.7
-        self.Ocb    = 0.24
+        self.H0     = 0.68
+        self.Ocb    = 0.3
         self.Omrad  = 0.0001
-        self.Ode    = 1-self.Ocb-self.Omrad
+        self.Odeobs = 1-self.Ocb-self.Omrad
 
-        self.lna    = np.linspace(-10, 0, 300)
+        self.lna    = np.linspace(-15, 0, 300)
         self.z      = np.exp(-self.lna) - 1.
         self.zvals  = np.linspace(0, 3, 300)
 
         self.cte    = 3*self.H0**2
+        self.n      = 2
+        self.m      = 4
 
 
     def something(self):
@@ -45,13 +48,13 @@ class Quintom:
 
     def Vphan(self, x, select):
         "0-Potential, 1-Derivative"
-        if select == 0:     return 0.5*(x*self.mphan)**2
-        if select == 1:     return x*self.mphan**2
+        if select == 0:     return 0.5*(x*self.mphan)**self.m
+        if select == 1:     return 0.5*(x*self.mphan)**(self.m-1)*self.mphan*self.m
 
 
     def Vquin(self, x, select):
-        if select == 0:     return 0.5*(x*self.mquin)**2
-        if select == 1:     return x*self.mquin**2
+        if select == 0:     return 0.5*(x*self.mquin)**self.n
+        if select == 1:     return 0.5*(x*self.mquin)**(self.n-1)*self.mquin*self.n
 
 
 
@@ -63,7 +66,7 @@ class Quintom:
             Ode_phan = -0.5*dotphan**2 + self.Vphan(phan, 0)/self.cte
             Ode      = Ode_quin + Ode_phan
         else:
-            Ode      = self.Ode
+            Ode      = self.Odeobs
 
         return self.H0*np.sqrt(self.Ocb/a**3 + self.Omrad/a**4 + Ode)
 
@@ -100,42 +103,72 @@ class Quintom:
 
 
 
-    def find_Ode(self, phan0=0.3):
+
+    def calc_Ode(self, mid):
+        phan0 = self.phan0
+        if   self.mquin == 0.:   a, b = 0, mid
+        elif self.mphan == 0.:   a, b = mid, 0
+        else:
+            a,b = np.sqrt(2*3*self.H0**2*self.Odeobs + (self.mphan*mid)**2)/self.mquin, mid
+
+        sol = self.solver(a, 0.0, b, 0.0).T
+
+        quin, dotq, phan, dotp = sol
+        rho_quin =   0.5*dotq[-1]**2 + self.Vquin(quin[-1], 0)/self.cte
+        rho_phan =  -0.5*dotp[-1]**2 + self.Vphan(phan[-1], 0)/self.cte
+
+        Ode = (rho_quin + rho_phan)*(self.H0/self.hubble(0.0, [quin[-1], dotq[-1], phan[-1], dotp[-1]], SF=True))**2
+        tol = self.Odeobs - Ode
+
+        return tol, Ode
+
+
+    def bisection(self):
         "Search for intial condition of phi such that \O_DE today is 0.7"
-        lowphi, highphi = 0, 5
-        tol, tol1       = 101, 100
-        Ttol            = 1e-3
-        count           = 0
-
-        while (np.abs(tol)> Ttol):
-            #Suggested initial value for phi, given phan_0 [also a free parameter]
-            mid = (lowphi + highphi)/2.0
-            sol = self.solver(mid, 0, phan0, 0).T
-            quin, dotq, phan, dotp = sol
-
-            rho_quin =   0.5*dotq[-1]**2 + self.Vquin(quin[-1], 0)/self.cte
-            rho_phan =  -0.5*dotp[-1]**2 + self.Vphan(phan[-1], 0)/self.cte
-
-            Ode = (rho_quin + rho_phan)*(self.H0/self.hubble(0.0, [quin[-1], dotq[-1], phan[-1], dotp[-1]], SF=True))**2
-            tol = (1- self.Ocb- self.Omrad) - Ode
-
-            if(np.abs(tol) < Ttol):
-                print 'reach tolerance', 'Ode=', Ode, 'phi_0=', mid, 'error=', np.abs(tol)
-                break
+        lowphi, highphi = -100, 100
+        Ttol            = 1E-3
+        mid =(lowphi + highphi)/2.0
+        while (highphi - lowphi )/2.0 > Ttol*0.01:
+            ode_mid = self.calc_Ode(mid)[0]
+            ode_low = self.calc_Ode(lowphi)[0]
+            if(np.abs(ode_mid) < Ttol):
+                print 'reach tolerance',  'phi_0=', mid, 'error=', self.calc_Ode(mid)
+                return mid
+            elif ode_low*ode_mid<0:
+                highphi  = mid
             else:
-                if(tol<0): highphi = mid
-                else:      lowphi  = mid
+                lowphi   = mid
+            #print mid, self.calc_Ode(mid) ,(1- self.Ocb- self.Omrad)
+            mid = (lowphi + highphi)/2.0
 
-            count += 1
-            if (count > 10):
-                mid = 0
-                print 'No solution found!'
-                break
+        print 'No solution found!', mid, ode_mid
+        mid = 0
+        return mid
 
+
+
+    def prueba(self):
+        #min, max = (0, .1)
+        #step     = (max-min)/10.
+        self.phan0 = 1.8
+        #for i in np.arange(min, max, step):
+        self.bisection()
+
+
+    def search_ini(self):
+        mid = self.bisection()
+        if   self.mquin == 0:   a, b = 0, mid
+        elif self.mphan == 0:   a, b = mid, 0
+        else:
+            a,b = np.sqrt(2*3*self.H0**2*self.Odeobs + (self.mphan*mid)**2)/self.mquin, mid
+        sol = self.solver(a, 0.0, b, 0.0).T
         self.hub_SF   = interp1d(self.lna, self.hubble(self.lna, sol, SF=True))
         self.hub_SF_z = self.logatoz(self.hubble(self.lna, sol, SF=True))
         self.solution = sol
         return mid
+
+
+
 
 
     #   Plots
@@ -151,9 +184,11 @@ class Quintom:
         hh=[]
         ww = []
         Oma=[]
+        vphi = []
+        dphi = []
 
-        min, max = (1.1, 1.2)
-        step     = (max-min)/20.
+        min, max = (.1, 4)
+        step     = (max-min)/10.
 
         mymap    = mpl.colors.LinearSegmentedColormap.from_list('mycolors',['blue','red'])
         Z        = [[0,0],[0,0]]
@@ -161,15 +196,20 @@ class Quintom:
         CS3      = plt.contourf(Z, levels, cmap=mymap)
 
         for i in np.arange(min, max, step):
-            phi0  = self.find_Ode(phan0 = i)
+            #self.mphan = i
+            self.mquin = i
+
+            phi0  = self.search_ini()
             if phi0 == 0:
                 continue
             else:
             #if True:
-                scalars = self.solution #self.solver(0, 0, phan0, 0).T #self.solution
+                #self.solution = self.solver(phi0, 0, 0, 0).T
+                scalars = self.solution
                 quin, dquin, phan, dphan = scalars
 
-                hub_SF_z = self.hub_SF_z #self.logatoz(self.hubble(self.lna, scalars, SF=True)) #self.hub_SF_z
+                #hub_SF_z = self.logatoz(self.hubble(self.lna, scalars, SF=True))
+                hub_SF_z = self.hub_SF_z
                 rho_quin =   0.5*dquin**2 + self.Vquin(quin, 0)/self.cte
                 rho_phan =  -0.5*dphan**2 + self.Vphan(phan, 0)/self.cte
 
@@ -188,6 +228,8 @@ class Quintom:
                 hh.append(100*hub_SF_z)
                 ww.append(self.logatoz(w1/w2))
                 Oma.append(Om)
+                vphi.append(self.logatoz(w1))
+                dphi.append(self.logatoz(w2))
 
 
         fig = plt.figure(figsize=(9,10))
@@ -195,17 +237,17 @@ class Quintom:
         for x,y,z in zip(zz,ww,P):
             r    = (float(z)-min)/(max-min)
             g, b = 0, 1-r
-            ax1.plot(x, y, color=(r,g,b))
+            ax1.plot(x, y , color=(r,g,b))
         plt.axhline(y=-1, color='k', linestyle='--')
         ax1.legend(loc='lower right', frameon=False)
-        plt.title('$m_\phi$ = %.1f, $m_\psi$=%.1f'%(self.mquin, self.mphan), fontsize=20)
+        plt.title('Quintom, $m_{\phi}$=1', fontsize=20)
         plt.ylabel('$w_{\phi, \psi}$', fontsize=20)
 
 
 
-        cbaxes = fig.add_axes([0.91, 0.1, 0.03, 0.8])
+        cbaxes = fig.add_axes([0.9, 0.1, 0.03, 0.8])
         cbar   = plt.colorbar(CS3, cax = cbaxes)
-        cbar.set_label('$\phi_0$', rotation=0, fontsize=20)
+        cbar.set_label('$m_\phi$', rotation=0, fontsize=20)
 
 
         ax2 = fig.add_subplot(312)
@@ -225,9 +267,9 @@ class Quintom:
 
 
         ax3 = fig.add_subplot(313)
-        ax3.plot(self.lna, self.Ocb/a**3*(self.H0/self.hubble(self.lna))**2,   'k-')
-        ax3.plot(self.lna, self.Omrad/a**4*(self.H0/self.hubble(self.lna))**2, 'k-')
-        ax3.plot(self.lna, self.Ode*(self.H0/self.hubble(self.lna))**2, 'o',  markersize=2)
+        ax3.plot(self.lna, self.Ocb/a**3*(self.H0/self.hubble(self.lna))**2,   'o',  markersize=2)
+        ax3.plot(self.lna, self.Omrad/a**4*(self.H0/self.hubble(self.lna))**2, 'o',  markersize=2)
+        ax3.plot(self.lna, self.Odeobs*(self.H0/self.hubble(self.lna))**2, 'o',  markersize=2)
         for x,y,z in zip(X,Y,P):
             r = (float(z)-min)/(max-min)
             g, b = 0, 1-r
@@ -305,14 +347,54 @@ class Quintom:
         plt.show()
 
 
+    def contours(self):
+        dir ='/Users/josevazquezgonzalez/Desktop/Desktop_Jose/work/Papers/Quintom/chains/'
+        name_in = 'Quintom_phy_Planck_15+BBAO_'
+
+        file = open('Quintom_contour.txt','w')
+        ztmp = [0, 0.5, 1, 1.5, 2, 2.5]
+
+        for j in range(4):
+            i = 0
+            for line in reversed(open(dir + name_in + '%s.txt'%(j+1)).readlines()):
+                if i% 10==1:
+                    a= line.split(' ')
+                    #print a[5:7]
+                    self.mquin = float(a[5]) #map(float, a[5:8])
+                    self.mphan = float(a[6])
+                    self.H0  = float(a[4])
+                    self.Ocb = float(a[2])
+
+                    phi0  = self.search_ini()
+                    #print phi0, '****'
+                    if phi0 == 0:
+                        continue
+                    else:
+                        scalars = self.solution
+                        quin, dquin, phan, dphan = scalars
+
+                        w1 = 0.5*dquin**2 - self.Vquin(quin, 0)/self.cte - 0.5*dphan**2  - self.Vphan(phan, 0)/self.cte
+                        w2 = 0.5*dquin**2 + self.Vquin(quin, 0)/self.cte - 0.5*dphan**2  + self.Vphan(phan, 0)/self.cte
+
+                        bb = interp1d(self.zvals,  self.logatoz(w1/w2), kind='linear')
+
+                        file.write('%s %s %s\n'%(a[0] , ' '.join(map(str, ztmp)) , ' '.join(map(str, bb(ztmp)))))
+
+                    print j+1, i
+                i+=1
+                if i == 10000: break
+                file.flush()
+        file.close()
 
 
 if __name__ == '__main__':
-    Q = Quintom(mquin=4.0, mphan=1., quin0=0, phan0=0.)
+    Q = Quintom(mquin= 2., mphan= 2., quin0=0., phan0=1.)
 
+    #print Q.find_Ode()
+    #print Q.prueba()
     #Q.plot_potential()
     Q.plot_Vomegas()
-    #Q.find_Ode()
+    #Q.contours()
     #Q.plot_hubble()
     #Q.plot_SN()
 

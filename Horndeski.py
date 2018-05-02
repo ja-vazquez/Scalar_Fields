@@ -122,7 +122,7 @@ class Horndeski:
                 if i% 10==1:
                     a= line.split(' ')
                     #print a[5:7]
-                    self.w0 = float(a[5]) #map(float, a[5:8])
+                    self.w0 = float(a[5]) #map(float, a[5:8]
                     self.H0  = float(a[4])
                     self.Ocb = float(a[2])
                     self.inter()

@@ -7,8 +7,8 @@ import os, sys
 
 
 cmd=""" 
-python compute_contours.py pto_1.txt 0.0 1.8
-python plot_fgivenx.py pto_1 \\\\rho_{DE} 
+python compute_contours.py Quintom_contour.txt -0.5 2
+python plot_fgivenx.py Quintom_contour \\\\w_{DE} 
 """
 
 
