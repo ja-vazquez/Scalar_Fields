@@ -19,7 +19,7 @@ class DarkM:
 
 
     def something(self):
-        print self.name
+        print(self.name)
 
 
     def ode_int_rk(self, func, y_0, t, args={}):
@@ -82,6 +82,6 @@ class DarkM:
 
 if __name__ == '__main__':
     DM = DarkM(mquin= 2.)
-    print DM.plot()
+    print (DM.plot())
 
 
